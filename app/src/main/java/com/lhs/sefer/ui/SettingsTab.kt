@@ -37,7 +37,7 @@ fun SettingsTab(vm: AppViewModel) {
         SectionTitle("About")
         Text(
             "Light Hebrew Sefer (LHS)\nThe Hebrew Scriptures (Tanakh) · New Living Translation\n" +
-                "Torah, Nevi'im and Ketuvim · 39 books · works fully offline.",
+                "Torah, Nevi'im and Ketuvim · 39 books \n ·  Light Hebrew Sefer is a private, non-commercial reading app made for personal use only. It is not published, sold, or distributed. Scripture text is from the Holy Bible, New Living Translation (NLT), copyright © 1996, 2004, 2015 by Tyndale House Foundation. All rights reserved. This app is not affiliated with or endorsed by Tyndale House Publishers.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

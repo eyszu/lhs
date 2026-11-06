@@ -187,7 +187,8 @@ fun SearchTab(vm: AppViewModel, snackbar: SnackbarHostState) {
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
                         )
                     }
-                    items(r.verses, key = { it.id }) { verse ->
+                    items(r.verses, key = { it.id }) { original ->
+                        val verse = vm.withEdit(original)
                         ResultRow(
                             verse = verse,
                             terms = terms,

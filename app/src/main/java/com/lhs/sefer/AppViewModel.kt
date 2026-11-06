@@ -42,6 +42,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     var bookmarkedIds by mutableStateOf<Set<Int>>(emptySet())
         private set
 
+    /** Verse id -> the user's own wording. The bundled database itself is never modified. */
+    var verseEdits by mutableStateOf<Map<Int, String>>(emptyMap())
+        private set
+
     var tab by mutableStateOf(Tab.READ)
     var reader by mutableStateOf<ReaderLocation?>(null)
         private set
@@ -53,8 +57,28 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             repo.open()
             chapterCounts = repo.chapterCounts()
             replaceBookmarks(kotlinx.coroutines.withContext(Dispatchers.IO) { store.all() })
+            verseEdits = kotlinx.coroutines.withContext(Dispatchers.IO) { store.edits() }
             ready = true
         }
+    }
+
+    // ---------- verse editing ----------
+
+    /** The verse with the user's edit applied (if any). */
+    fun withEdit(v: Verse): Verse = verseEdits[v.id]?.let { v.copy(text = it) } ?: v
+
+    fun isEdited(v: Verse): Boolean = v.id in verseEdits
+
+    fun saveVerseEdit(v: Verse, newText: String) {
+        val text = newText.trim()
+        if (text.isEmpty()) return
+        verseEdits = verseEdits + (v.id to text)
+        viewModelScope.launch(Dispatchers.IO) { store.saveEdit(v.id, text) }
+    }
+
+    fun revertVerseEdit(v: Verse) {
+        verseEdits = verseEdits - v.id
+        viewModelScope.launch(Dispatchers.IO) { store.deleteEdit(v.id) }
     }
 
     // ---------- settings ----------

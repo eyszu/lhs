@@ -30,6 +30,10 @@ import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.TextFields
@@ -106,7 +110,9 @@ fun ReaderScreen(vm: AppViewModel, loc: ReaderLocation, snackbar: SnackbarHostSt
         if (selected.isNotEmpty()) selected = emptySet() else vm.closeReader()
     }
 
-    val chosen: List<Verse> = verses.orEmpty().filter { it.id in selected }
+    val chosenOriginal: List<Verse> = verses.orEmpty().filter { it.id in selected }
+    val chosen: List<Verse> = chosenOriginal.map { vm.withEdit(it) }
+    var editing by remember { mutableStateOf<Verse?>(null) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -149,6 +155,10 @@ fun ReaderScreen(vm: AppViewModel, loc: ReaderLocation, snackbar: SnackbarHostSt
                     onShare = {
                         context.shareText(formatForCopy(chosen, settings.divineName))
                     },
+                    // editing is only offered when exactly one verse is selected
+                    onEdit = if (chosenOriginal.size == 1) {
+                        { editing = chosenOriginal[0] }
+                    } else null,
                 )
             } else {
                 ChapterBar(
@@ -191,7 +201,7 @@ fun ReaderScreen(vm: AppViewModel, loc: ReaderLocation, snackbar: SnackbarHostSt
                 }
                 items(list, key = { it.id }) { verse ->
                     VerseRow(
-                        verse = verse,
+                        verse = vm.withEdit(verse),
                         settings = settings,
                         selected = verse.id in selected,
                         bookmarked = verse.id in vm.bookmarkedIds,
@@ -202,16 +212,37 @@ fun ReaderScreen(vm: AppViewModel, loc: ReaderLocation, snackbar: SnackbarHostSt
                     )
                 }
                 item("footer") {
-                    Text(
+                  /*  Text(
                         "Tap verses to select them, then copy, bookmark or share.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-                    )
+                    ) */
                 }
             }
         }
+    }
+
+    editing?.let { original ->
+        EditVerseDialog(
+            reference = "${book.name} ${original.chapter}:${original.number}",
+            initialText = displayText(vm.withEdit(original).text, settings.divineName),
+            isEdited = vm.isEdited(original),
+            onSave = { newText ->
+                vm.saveVerseEdit(original, newText)
+                editing = null
+                selected = emptySet()
+                scope.launch { snackbar.showSnackbar("Verse updated") }
+            },
+            onRevert = {
+                vm.revertVerseEdit(original)
+                editing = null
+                selected = emptySet()
+                scope.launch { snackbar.showSnackbar("Original text restored") }
+            },
+            onDismiss = { editing = null },
+        )
     }
 
     if (showSheet) {
@@ -300,6 +331,7 @@ private fun SelectionBar(
     onCopy: () -> Unit,
     onBookmark: () -> Unit,
     onShare: () -> Unit,
+    onEdit: (() -> Unit)?,
 ) {
     Surface(color = MaterialTheme.colorScheme.surfaceContainerHigh, tonalElevation = 3.dp) {
         Row(
@@ -312,6 +344,9 @@ private fun SelectionBar(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.weight(1f),
             )
+            if (onEdit != null) {
+                IconButton(onClick = onEdit) { Icon(Icons.Filled.Edit, contentDescription = "Edit verse") }
+            }
             IconButton(onClick = onCopy) { Icon(Icons.Filled.ContentCopy, contentDescription = "Copy") }
             IconButton(onClick = onBookmark) {
                 Icon(
@@ -347,4 +382,40 @@ private fun ChapterBar(
             }
         }
     }
+}
+
+@Composable
+private fun EditVerseDialog(
+    reference: String,
+    initialText: String,
+    isEdited: Boolean,
+    onSave: (String) -> Unit,
+    onRevert: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var text by remember { mutableStateOf(initialText) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit $reference") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3,
+                    maxLines = 10,
+                )
+                if (isEdited) {
+                    TextButton(onClick = onRevert, modifier = Modifier.padding(top = 4.dp)) {
+                        Text("Restore original text")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(text) }, enabled = text.isNotBlank()) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }

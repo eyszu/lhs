@@ -19,12 +19,24 @@ class BibleRepository(private val context: Context) {
     private fun openDatabase(): SQLiteDatabase {
         val target: File = context.getDatabasePath(DB_NAME)
         val prefs = context.getSharedPreferences("lhs_internal", Context.MODE_PRIVATE)
-        if (!target.exists() || prefs.getInt(KEY_DB_VERSION, 0) != DB_VERSION) {
+        // Re-copy whenever this build was (re)installed, so a changed assets/nlt.db always takes effect.
+        val installStamp = context.packageManager
+            .getPackageInfo(context.packageName, 0).lastUpdateTime
+        val stale = prefs.getInt(KEY_DB_VERSION, 0) != DB_VERSION ||
+            prefs.getLong(KEY_INSTALL_STAMP, 0L) != installStamp
+        if (!target.exists() || stale) {
             target.parentFile?.mkdirs()
+            // drop any leftover journal files from the old copy
+            File(target.path + "-journal").delete()
+            File(target.path + "-wal").delete()
+            File(target.path + "-shm").delete()
             context.assets.open(DB_NAME).use { input ->
                 target.outputStream().use { output -> input.copyTo(output) }
             }
-            prefs.edit().putInt(KEY_DB_VERSION, DB_VERSION).apply()
+            prefs.edit()
+                .putInt(KEY_DB_VERSION, DB_VERSION)
+                .putLong(KEY_INSTALL_STAMP, installStamp)
+                .apply()
         }
         return SQLiteDatabase.openDatabase(target.path, null, SQLiteDatabase.OPEN_READONLY)
     }
@@ -92,6 +104,7 @@ class BibleRepository(private val context: Context) {
         const val DB_NAME = "nlt.db"
         const val DB_VERSION = 1   // bump when the bundled database changes
         const val KEY_DB_VERSION = "db_version"
+        const val KEY_INSTALL_STAMP = "install_stamp"
         const val MAX_RESULTS = 3000
     }
 }

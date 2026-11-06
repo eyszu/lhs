@@ -73,7 +73,8 @@ fun BookmarksTab(vm: AppViewModel, snackbar: SnackbarHostState) {
     }
 
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp)) {
-        items(list, key = { it.id }) { verse ->
+        items(list, key = { it.id }) { stored ->
+            val verse = vm.withEdit(stored)
             Column(Modifier.fillMaxWidth()) {
                 Row(
                     Modifier
