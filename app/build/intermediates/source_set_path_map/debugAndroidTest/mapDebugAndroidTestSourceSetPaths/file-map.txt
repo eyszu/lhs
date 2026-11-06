@@ -1,4 +1,0 @@
-com.lhs.sefer.test.app-androidTest-0 C:\Users\asyong\Documents\AndroidDevelopment\LightHebrewSefer\app\build\generated\res\resValues\androidTest\debug
-com.lhs.sefer.test.app-mergeDebugAndroidTestResources-1 C:\Users\asyong\Documents\AndroidDevelopment\LightHebrewSefer\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
-com.lhs.sefer.test.app-mergeDebugAndroidTestResources-2 C:\Users\asyong\Documents\AndroidDevelopment\LightHebrewSefer\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
-com.lhs.sefer.test.app-debugAndroidTest-3 C:\Users\asyong\Documents\AndroidDevelopment\LightHebrewSefer\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources
