@@ -21,3 +21,8 @@ organised as the Tanakh: Torah, Nevi'im, Ketuvim.
 `app/src/main/assets/nlt.db` is the supplied database plus an index on (book, chapter, verse),
 WAL mode removed, and one garbled word fixed (Deut 20:7 "fiancée").
 The supplied database contains the 39 Old Testament books only.
+
+## Install pre build
+- download codes (zip)
+- unzip and copy LHS.apk to your phone
+- install LHS.apk
